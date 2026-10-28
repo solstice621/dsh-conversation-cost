@@ -1,0 +1,25 @@
+{
+  "name": "dsh-conversation-cost",
+  "version": "0.1.5",
+  "description": "Automatic model pricing and per-answer / conversation cost estimates for DeepSeek Harness Desktop.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web" }
+  },
+  "engines": { "node": ">=20.3.0", "dsh": ">=0.2.1-rc.3 <0.3.0-0" },
+  "files": ["lib", "data", "docs", "cordis.patch.yml", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "CHANGELOG.md"],
+  "scripts": { "test": "node --test test/*.test.mjs", "check": "node scripts/check-package.mjs" },
+  "author": "solstice621",
+  "repository": { "type": "git", "url": "git+https://github.com/solstice621/dsh-conversation-cost.git" },
+  "homepage": "https://github.com/solstice621/dsh-conversation-cost#readme",
+  "bugs": { "url": "https://github.com/solstice621/dsh-conversation-cost/issues" },
+  "keywords": ["dsh-plugin", "deepseek-harness", "cost", "token-usage", "model-pricing", "desktop"],
+  "license": "MIT"
+}
