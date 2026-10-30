@@ -158,10 +158,10 @@ test('fast persisted snapshot displays immediately in composer and all footers b
   assert.match(h.calls[0].url, /&cached=1$/);
   assert.equal(h.calls[0].options.credentials, 'same-origin');
   h.reply(h.cached()[0], data({ state: 'cached', amount: .25 })); await h.settle();
-  assert.equal(h.pill(composer), 'Cost ≈$0.2500 待更新');
-  assert.equal(h.pill(first), 'Cost ≈$0.2500 待更新');
-  assert.equal(h.pill(second), 'Cost ≈$0.1234 待更新');
-  assert.match(h.button(composer).props.title, /待更新/);
+  assert.equal(h.pill(composer), 'Cost ≈$0.2500');
+  assert.equal(h.pill(first), 'Cost ≈$0.2500');
+  assert.equal(h.pill(second), 'Cost ≈$0.1234');
+  assert.equal(h.button(composer).props.title, '查看模型价格与费用明细（美元 USD）');
   h.reply(h.regular()[0], data({ amount: .3, seq: 11, updatedAt: 100001 })); await h.settle();
   assert.equal(h.pill(composer), 'Cost ≈$0.3000');
   assert.equal(h.pill(first), 'Cost ≈$0.3000');
@@ -181,7 +181,7 @@ test('older regular snapshot does not downgrade a newer disk snapshot', async ()
   const h = harness(), composer = h.mount();
   h.reply(h.cached()[0], data({ state: 'cached', amount: .5, seq: 20 })); await h.settle();
   h.reply(h.regular()[0], data({ amount: .1, seq: 10 })); await h.settle();
-  assert.equal(h.pill(composer), 'Cost ≈$0.5000 待更新');
+  assert.equal(h.pill(composer), 'Cost ≈$0.5000');
   assert.match(h.button(composer).props.title, /保留最近金额/);
   h.click(composer); h.reply(h.regular()[1], data({ amount: .6, seq: 21 })); await h.settle();
   assert.equal(h.pill(composer), 'Cost ≈$0.6000');
@@ -190,7 +190,7 @@ test('older regular snapshot does not downgrade a newer disk snapshot', async ()
 test('newer canonical repair may lower sequence and calls, while old timestamps and sequence ties cannot regress it', async () => {
   const h = harness(), composer = h.mount(), footer = h.mount('footer');
   h.reply(h.cached()[0], data({ state: 'cached', amount: .5, seq: 10, updatedAt: 1000 })); await h.settle();
-  assert.equal(h.pill(composer), 'Cost ≈$0.5000 待更新');
+  assert.equal(h.pill(composer), 'Cost ≈$0.5000');
   const repaired = data({ state: 'fresh', amount: .4, seq: 8, updatedAt: 2000 });
   repaired.calls--; repaired.subscriptionCalls--; repaired.models[0].calls--;
   repaired.turns[1].calls--; repaired.turns[1].subscriptionCalls--; repaired.turns[1].models[0].calls--;
@@ -201,7 +201,7 @@ test('newer canonical repair may lower sequence and calls, while old timestamps 
   for (const options of [{ seq: 12, updatedAt: 1500 }, { seq: 7, updatedAt: 2000 }]) {
     const request = h.api.requestCost('session-test', JSON.stringify({ tokens: 100 }), true);
     h.reply(h.regular().at(-1), data({ amount: .9, ...options })); await request; await h.settle();
-    assert.equal(h.pill(composer), 'Cost ≈$0.4000 待更新');
+    assert.equal(h.pill(composer), 'Cost ≈$0.4000');
     assert.equal(h.api.costSource('session-test').data.calls, 3);
     assert.equal(h.api.costSource('session-test').data.cache.updatedAt, 2000);
     assert.equal(h.api.costSource('session-test').data.cache.throughSeq, 8);
@@ -211,16 +211,16 @@ test('newer canonical repair may lower sequence and calls, while old timestamps 
   assert.equal(h.pill(composer), 'Cost ≈$0.4500'); assert.equal(h.pill(footer), 'Cost ≈$0.4500');
 });
 
-test('regular failure preserves cached amount, shared error, visible pending status and retry dialog', async () => {
+test('regular failure preserves cached amount, shared error and retry dialog without a pending notice', async () => {
   const h = harness(), composer = h.mount(), footer = h.mount('footer');
   h.reply(h.cached()[0], data({ state: 'cached', amount: .42 })); await h.settle();
   h.regular()[0].reject(Error('session read failed')); await h.settle();
   for (const instance of [composer, footer]) {
-    assert.equal(h.pill(instance), 'Cost ≈$0.4200 待更新');
+    assert.equal(h.pill(instance), 'Cost ≈$0.4200');
     assert.match(h.button(instance).props.title, /点击后可重试/);
   }
   h.click(footer);
-  assert.match(h.dialogText(footer), /费用待更新，当前显示最近快照/);
+  assert.doesNotMatch(h.dialogText(footer), /待更新|最近快照|上次保存/);
   assert.match(h.dialogText(footer), /费用暂时无法读取/);
   h.reply(h.regular()[1], data({ amount: .43, seq: 11 })); await h.settle();
   assert.equal(h.pill(composer), 'Cost ≈$0.4300');
@@ -233,7 +233,7 @@ test('late disk snapshot remains useful after a cold regular error', async () =>
   h.regular()[0].reject(Error('offline')); await h.settle();
   assert.equal(h.pill(composer), 'Cost 暂不可用');
   h.reply(h.cached()[0], data({ state: 'cached', amount: .17 })); await h.settle();
-  assert.equal(h.pill(composer), 'Cost ≈$0.1700 待更新');
+  assert.equal(h.pill(composer), 'Cost ≈$0.1700');
 });
 
 test('disk/network cache-only failure falls back to ordinary GET without false cold errors', async () => {
@@ -244,15 +244,31 @@ test('disk/network cache-only failure falls back to ordinary GET without false c
   assert.equal(h.pill(composer), 'Cost ≈$0.0072');
 });
 
-test('cached/stale metadata and safe cache errors are visible even when HTTP succeeds', async () => {
+test('cached/stale metadata and safe cache errors retain amounts and retry without visible pending notices', async () => {
   for (const options of [{ state: 'cached' }, { state: 'stale', error: 'session-read-failed' }, { state: 'fresh', error: 'cache-write-failed' }]) {
     const h = harness(), composer = h.mount(), footer = h.mount('footer');
     await loaded(h, composer, data(options));
-    assert.equal(h.pill(composer), 'Cost ≈$0.0072 待更新');
-    assert.equal(h.pill(footer), 'Cost ≈$0.0072 待更新');
+    assert.equal(h.pill(composer), 'Cost ≈$0.0072');
+    assert.equal(h.pill(footer), 'Cost ≈$0.0072');
     h.click(composer);
-    assert.match(h.dialogText(composer), /费用待更新/);
+    assert.doesNotMatch(h.dialogText(composer), /待更新|最近快照|上次保存/);
+    assert.equal(h.regular().length, 2, 'hidden cache state still forces a retry when clicked');
     assert.doesNotMatch(h.dialogText(composer), /session-read-failed|cache-write-failed/);
+  }
+});
+
+test('background validation never adds pending text to composer/footer labels, tooltips or dialogs', async () => {
+  for (const options of [{ state: 'cached' }, { state: 'stale' }, { state: 'fresh', error: 'cache-write-failed' }, { state: 'cached', unpriced: true }]) {
+    const h = harness(), composer = h.mount(), footer = h.mount('footer');
+    await loaded(h, composer, data(options));
+    for (const instance of [composer, footer]) {
+      assert.equal(h.pill(instance), options.unpriced ? 'Cost 未计价' : 'Cost ≈$0.0072');
+      assert.doesNotMatch(h.button(instance).props.title, /待更新|最近快照|上次保存/);
+      assert.equal(h.button(instance).children.length, 1, 'no status badge is appended to the amount');
+      h.click(instance);
+      assert.equal(h.dialog(instance).props.pending, undefined, 'dialog has no visual pending state');
+      assert.doesNotMatch(h.dialogText(instance), /待更新|最近快照|上次保存/);
+    }
   }
 });
 
@@ -296,7 +312,7 @@ test('fresh same usage is not repeatedly fetched on idle renders/visibility, but
   h.reply(h.regular()[1], data({ updatedAt: 130000 })); await h.settle();
   h.update(composer, { useProjection: () => ({ tokens: 101 }) });
   assert.equal(h.regular().length, 3, 'changed usage immediately invalidates the fresh key');
-  assert.equal(h.pill(composer), 'Cost ≈$0.0072 待更新');
+  assert.equal(h.pill(composer), 'Cost ≈$0.0072');
 });
 
 test('only one composer timer feeds many footers and running keeps 5s retry/recovery', async () => {
@@ -307,7 +323,7 @@ test('only one composer timer feeds many footers and running keeps 5s retry/reco
   assert.equal([...h.timers.values()][0].ms, 5000);
   h.advance(5000); assert.equal(h.regular().length, 2);
   h.regular()[1].reject(Error('temporary')); await h.settle();
-  assert.equal(h.pill(composer), 'Cost ≈$0.0072 待更新');
+  assert.equal(h.pill(composer), 'Cost ≈$0.0072');
   h.advance(5000); assert.equal(h.regular().length, 3);
   h.reply(h.regular()[2], data({ amount: .2, seq: 11, updatedAt: 110000 })); await h.settle();
   assert.equal(h.pill(composer), 'Cost ≈$0.2000');
@@ -438,6 +454,6 @@ test('price refresh busy/error/data are shared and late completion cannot update
   h.reply(h.regular('session-next')[0], data({ sessionId: 'session-next' })); await h.settle();
   assert.equal(h.pill(composer), 'Cost ≈$0.0072');
   h.update(composer, { sessionId: 'session-test' });
-  assert.equal(h.pill(composer), 'Cost ≈$0.0072 待更新');
+  assert.equal(h.pill(composer), 'Cost ≈$0.0072');
   assert.match(h.button(composer).props.title, /同步未完成/);
 });
