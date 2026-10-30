@@ -1,6 +1,6 @@
 {
   "name": "dsh-conversation-cost",
-  "version": "0.1.5",
+  "version": "0.1.6-local.1",
   "description": "Automatic model pricing and per-answer / conversation cost estimates for DeepSeek Harness Desktop.",
   "type": "module",
   "main": "lib/index.js",
