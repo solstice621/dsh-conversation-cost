@@ -25,19 +25,19 @@
 
 ## 安装
 
-已验证 **macOS + DeepSeek Harness Desktop `0.2.1-rc.3`**。其他宿主版本和操作系统尚未完成桌面验证；当前宿主版本声明为 `>=0.2.1-rc.3 <0.3.0-0`。
+已验证 **macOS + DeepSeek Harness Desktop `0.2.1-rc.3`**。插件不设宿主版本门槛，启动时检查会话读取和认证 Fetch 接口；其他宿主版本和操作系统尚未完成桌面验证。
 
 1. 在 Harness 左侧打开「插件」→「添加插件」。
 2. 填写以下地址，安装并启用：
 
    ```text
-   github:solstice621/dsh-conversation-cost#v0.1.5
+   github:solstice621/dsh-conversation-cost#main
    ```
 
 3. 若当前窗口尚未出现 Cost，刷新 Harness 界面；仍未出现时完全退出并重新打开。
 4. 打开一个已有会话，即可看到累计费用和已完成回答的逐轮费用，无需为验证功能重新发送模型请求。
 
-如需跟随开发分支，可将 `#v0.1.5` 换成 `#main`。插件直接提供可运行的 JavaScript，无需构建或执行第三方安装脚本。
+固定安装源码时，可将 `#main` 替换为指定提交 SHA；已有 tag 使用各自的旧版声明。插件直接提供可运行的 JavaScript，无需构建或执行第三方安装脚本。
 
 本地打包、CLI 安装、更新与卸载步骤见 **[安装说明](docs/INSTALL.md)**。
 

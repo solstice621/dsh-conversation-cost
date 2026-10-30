@@ -7,16 +7,16 @@
 - 插件自身无需 API key，也不建立模型连接。请沿用你已有的 DeepSeek 或其他模型渠道。
 - 安装包直接包含 Host 与 Client JavaScript，不需要编译、`prepare` 或 `postinstall`。
 
-其他宿主版本、Linux 和 Windows 尚未完成桌面验证。`engines.dsh` 的声明范围不等同于每个版本都已验证。
+插件不声明宿主版本范围；启动时检查会话读取和认证 Fetch 接口。其他宿主版本、Linux 和 Windows 尚未完成桌面验证。
 
 ## 桌面版：从 GitHub 安装
 
 1. 打开 Harness 左侧「插件」。
 2. 点击「添加插件」。
-3. 填写固定版本地址：
+3. 填写当前源码地址：
 
    ```text
-   github:solstice621/dsh-conversation-cost#v0.1.5
+   github:solstice621/dsh-conversation-cost#main
    ```
 
 4. 安装完成后启用插件。
@@ -25,7 +25,7 @@
 
 点击回答旁的 Cost 查看该轮明细；点击输入框下方的 Cost 查看会话明细。安装后会读取已有日志，不需要发送收费请求验证。
 
-想跟随最新源码时可使用：
+以上地址跟随最新源码：
 
 ```text
 github:solstice621/dsh-conversation-cost#main
@@ -60,7 +60,7 @@ npm pack --ignore-scripts
 如果你已经通过 `dsh` CLI 管理 profile，可以使用同一个 bundle：
 
 ```sh
-dsh plugin --profile web add github:solstice621/dsh-conversation-cost#v0.1.5
+dsh plugin --profile web add github:solstice621/dsh-conversation-cost#main
 ```
 
 停止并重新启动对应的 `web` profile 后查看界面。这里的 `web` 只是示例；改为你实际使用的 profile。

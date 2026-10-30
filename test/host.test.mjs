@@ -6,6 +6,19 @@ import { join } from 'node:path';
 import { apply } from '../lib/index.js';
 const event = (seq, amount = 10) => ({ seq, time: Date.parse('2026-10-28T02:00:00Z'), type: 'assistant/message',
   data: { message: { source: { kind: 'model', provider: 'deepseek-official', model: 'deepseek-flash' } }, usage: { inputTokens: amount, outputTokens: 2 } } });
+test('missing host APIs fail before price initialization or route registration', () => {
+  for (const api of ['sessionQuery.readSession', 'connection.fetch.register']) {
+    const ctx = {
+      get() { throw Error('Host state must not be read before capability checks'); },
+      on() {}, effect() {},
+      sessionQuery: { readSession() {} },
+      connection: { fetch: { register() { throw Error('No route may be registered'); } } },
+    };
+    if (api === 'sessionQuery.readSession') ctx.sessionQuery.readSession = undefined;
+    else ctx.connection.fetch.register = 'unavailable';
+    assert.throws(() => apply(ctx), error => error.message.includes('dsh-conversation-cost') && error.message.includes(api));
+  }
+});
 async function host(readSession) {
   const home = await mkdtemp(join(tmpdir(), 'dsh-cost-host-'));
   const routes = new Map(), listeners = new Map(), disposers = [];
