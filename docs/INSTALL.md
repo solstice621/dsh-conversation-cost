@@ -40,17 +40,17 @@ github:solstice621/dsh-conversation-cost#main
 ```sh
 git clone https://github.com/solstice621/dsh-conversation-cost.git
 cd dsh-conversation-cost
-git checkout v0.1.5
+# 可选：git checkout <branch-or-commit>
 npm ci --ignore-scripts
 npm test
 npm run check
 npm pack --ignore-scripts
 ```
 
-生成 `dsh-conversation-cost-0.1.5.tgz`。在「插件 → 添加插件」中填写它的**绝对路径**并启用，例如：
+生成 `dsh-conversation-cost-<version>.tgz`，版本以当前检出的 `package.json` 为准。在「插件 → 添加插件」中填写它的**绝对路径**并启用，例如：
 
 ```text
-/absolute/path/to/dsh-conversation-cost/dsh-conversation-cost-0.1.5.tgz
+/absolute/path/to/dsh-conversation-cost/dsh-conversation-cost-0.1.6-local.1.tgz
 ```
 
 开发测试文件保留在 Git 仓库；安装包只包含运行入口、公共价格快照、许可证和说明文档。
@@ -81,15 +81,17 @@ dsh plugin --profile web add github:solstice621/dsh-conversation-cost#main
 
 在「插件」页面单独停用或卸载 `dsh-conversation-cost`。这会移除 Cost 界面和后台价格刷新，不影响模型授权插件、会话日志或原有 Token 统计。
 
-公共价格缓存可能保留在 `<DSH_HOME>/cache/dsh-conversation-cost/`。如需完全清理，可在插件停用后删除此目录；其中没有账号凭据和会话正文。
+公共价格缓存与精简用量快照可能保留在 `<DSH_HOME>/cache/dsh-conversation-cost/`。如需完全清理，可在插件停用后删除此目录；其中没有账号凭据和会话正文。
 
 ## 排查
 
 | 现象 | 检查方法 |
 | --- | --- |
-| 看不到任何 Cost | 确认插件已启用且宿主版本符合要求；刷新或重启 Harness，并打开已有会话 |
+| 看不到任何 Cost | 确认插件已启用且宿主提供所需 API；刷新或重启 Harness，并打开已有会话 |
 | 回答尚未显示单轮 Cost | 单轮入口在回答完成后出现；确认该轮有记录到助手消息及用量 |
-| 显示 `Cost ≈—` | 等待读取，或点击查看缺价/缺少用量的原因；尝试「立即同步价格」 |
+| 显示加载中或暂不可用 | 首次读取尚未完成或失败；点击重试，有本地缓存时不会清空旧金额 |
+| 显示未计价 | 点击检查模型价格或缺少用量的原因；可尝试「立即同步价格」 |
+| 金额旁显示待更新 | 正在后台校验或暂时读取失败；保留的是上次可用金额，可点击立即重试 |
 | 目录同步失败 | 确认宿主能访问 models.dev 与 DeepSeek 文档；失败会保留上次价格，无需重新授权 |
 | 旧 Go 模型没有价格 | 仅在同名 Zen API 价格存在时使用参考价，明细会注明；无法匹配时保留未计价状态 |
 | 更新后还是旧界面 | 确认安装来源确实变更，再刷新或完全重启；固定标签不会自动变成新版本 |
